@@ -15,7 +15,7 @@ pub enum Action {
         cache_directory: std::path::PathBuf,
     },
     RunServer {
-        #[arg(long, env, default_value_t = std::net::Ipv4Addr::new(0, 0, 0, 0))]
+        #[arg(long, env, default_value_t = std::net::Ipv4Addr::new(127, 0, 0, 1))]
         ip: std::net::Ipv4Addr,
         #[arg(long)]
         port: u16,

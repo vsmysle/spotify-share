@@ -24,8 +24,11 @@ async fn main() -> anyhow::Result<()> {
 
     match cli.command {
         cli::Action::GetToken { cache_directory } => {
-            let spotify_username = std::env::var("SPOTIFY_USERNAME")?;
-            let spotify_password = std::env::var("SPOTIFY_PASSWORD")?;
+            let spotify_username = std::env::var("SPOTIFY_USERNAME")
+                .expect("You must specify SPOTIFY_USERNAME environment variable.");
+
+            let spotify_password = std::env::var("SPOTIFY_PASSWORD")
+                .expect("You must specify SPOTIFY_PASSWORD environment variable.");
             token::get_session(&spotify_username, &spotify_password, cache_directory).await?;
         }
         cli::Action::RunServer {
@@ -33,8 +36,26 @@ async fn main() -> anyhow::Result<()> {
             port,
             cache_directory,
         } => {
-            let spotify_client_id = std::env::var("SPOTIFY_CLIENT_ID")?;
-            let spotify_client_secret = std::env::var("SPOTIFY_CLIENT_SECRET")?;
+            // Get token if not available
+            if !&cache_directory.try_exists()? {
+                let spotify_username = std::env::var("SPOTIFY_USERNAME")
+                    .expect("You must specify SPOTIFY_USERNAME environment variable.");
+
+                let spotify_password = std::env::var("SPOTIFY_PASSWORD")
+                    .expect("You must specify SPOTIFY_PASSWORD environment variable.");
+
+                token::get_session(
+                    &spotify_username,
+                    &spotify_password,
+                    cache_directory.clone(),
+                )
+                .await?;
+            }
+
+            let spotify_client_id = std::env::var("SPOTIFY_CLIENT_ID")
+                .expect("You must specify SPOTIFY_CLIENT_ID environment variable.");
+            let spotify_client_secret = std::env::var("SPOTIFY_CLIENT_SECRET")
+                .expect("You must specify SPOTIFY_CLIENT_ID environment variable.");
 
             // Channel for communication between API and
             let (tx, rx) = flume::unbounded();
