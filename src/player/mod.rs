@@ -1,17 +1,13 @@
 use std::sync::Arc;
 
 use librespot::{
-    core::{
-        config::SessionConfig,
-        session::Session,
-        cache::Cache, SpotifyId,
-    },
+    core::{cache::Cache, config::SessionConfig, session::Session, SpotifyId},
     playback::{
         audio_backend,
         config::{AudioFormat, PlayerConfig},
         mixer::NoOpVolume,
-        player::{Player, PlayerEvent}
-    }
+        player::{Player, PlayerEvent},
+    },
 };
 
 use crate::{storage::local::LocalStorage, track::Track};
@@ -20,21 +16,25 @@ pub mod action;
 pub mod interface;
 mod state;
 
-async fn get_session_with_cached_credentials(cache_location: std::path::PathBuf) -> anyhow::Result<Session> {
-    let session_config = SessionConfig::default(); 
+async fn get_session_with_cached_credentials(
+    cache_location: std::path::PathBuf,
+) -> anyhow::Result<Session> {
+    let session_config = SessionConfig::default();
     let cache = Cache::new(Some(cache_location), None, None, None)?;
-    
-    let session = Session::new(session_config, Some(cache.clone())); 
+
+    let session = Session::new(session_config, Some(cache.clone()));
     if let Some(cached_cred) = cache.credentials() {
-        match session.connect(cached_cred,true).await {
-            Ok(_) => Ok(session), 
+        match session.connect(cached_cred, true).await {
+            Ok(_) => Ok(session),
             Err(err) => {
-                tracing::error!("{}", err); 
+                tracing::error!("{}", err);
                 Err(anyhow::anyhow!("invalid session credentials"))
             }
         }
     } else {
-        Err(anyhow::anyhow!("invalid credentials in cache, please regenerate them with get_token"))
+        Err(anyhow::anyhow!(
+            "invalid credentials in cache, please regenerate them with get_token"
+        ))
     }
 }
 
@@ -50,25 +50,22 @@ pub async fn get_player(cache_location: std::path::PathBuf) -> anyhow::Result<Ar
     Ok(player)
 }
 
-
 pub struct SpotifyPlayer<LocalStorage> {
     player: Arc<Player>,
     interface: Arc<interface::PlayerInterface<LocalStorage>>,
-    rx: flume::Receiver<action::PlayerAction>
+    rx: flume::Receiver<action::PlayerAction>,
 }
-
-
 
 impl SpotifyPlayer<LocalStorage> {
     pub async fn new(
         player: Arc<Player>,
         interface: Arc<interface::PlayerInterface<LocalStorage>>,
-        rx: flume::Receiver<action::PlayerAction>
+        rx: flume::Receiver<action::PlayerAction>,
     ) -> Self {
         Self {
             player,
             interface,
-            rx
+            rx,
         }
     }
 
@@ -81,7 +78,7 @@ impl SpotifyPlayer<LocalStorage> {
     }
 
     pub async fn handle_api_actions(&self) -> anyhow::Result<()> {
-        tracing::info!("Initializing API events handler."); 
+        tracing::info!("Initializing API events handler.");
         while let Ok(event) = self.rx.recv_async().await {
             match event {
                 action::PlayerAction::Play => {
@@ -90,11 +87,11 @@ impl SpotifyPlayer<LocalStorage> {
                     if let Some(track) = track {
                         self.play_track(track).await;
                     }
-                },
+                }
                 action::PlayerAction::Stop => {
                     tracing::debug!("Received stop signal");
                     self.player.stop()
-                },
+                }
                 action::PlayerAction::Next => {
                     tracing::debug!("Received next signal");
                     let next_track = self.interface.get_next_track().await;
@@ -103,7 +100,7 @@ impl SpotifyPlayer<LocalStorage> {
                     } else {
                         tracing::warn!("No next track or error: {:?}", next_track);
                     }
-                },
+                }
                 action::PlayerAction::Prev => {
                     tracing::debug!("Received prev signal");
                     let prev_track = self.interface.get_prev_track().await;
@@ -112,7 +109,6 @@ impl SpotifyPlayer<LocalStorage> {
                     } else {
                         tracing::warn!("No prev track or error: {:?}", prev_track);
                     }
-                    
                 }
             }
         }
@@ -120,40 +116,47 @@ impl SpotifyPlayer<LocalStorage> {
     }
 
     pub async fn handle_player_events(&self) -> anyhow::Result<()> {
-        tracing::info!("Initializing player events handler."); 
+        tracing::info!("Initializing player events handler.");
         let mut channel = self.player.get_player_event_channel();
         loop {
             if let Some(event) = channel.recv().await {
                 match event {
-                    PlayerEvent::Stopped { track_id, ..} => {
+                    PlayerEvent::Stopped { track_id, .. } => {
                         tracing::info!("stopped playing track with id: {}", track_id);
-                    },
-                    PlayerEvent::Loading { track_id, ..} => {
+                    }
+                    PlayerEvent::Loading { track_id, .. } => {
                         tracing::info!("loading track with id: {}", track_id);
-                    },
+                    }
                     PlayerEvent::Preloading { track_id } => {
                         tracing::info!("preloading track with id: {}", track_id);
-                    },
-                    PlayerEvent::Playing {  track_id, ..} => {
+                    }
+                    PlayerEvent::Playing { track_id, .. } => {
                         tracing::info!("playing track with id: {}", track_id);
-                    },
-                    PlayerEvent::TimeToPreloadNextTrack { track_id, ..} => {
+                    }
+                    PlayerEvent::TimeToPreloadNextTrack { track_id, .. } => {
                         tracing::info!("time to preload the next track with id: {}", track_id);
-                        if let Ok(Some(track_id)) = self.interface.get_next_track_id_for_preload().await {
+                        if let Ok(Some(track_id)) =
+                            self.interface.get_next_track_id_for_preload().await
+                        {
                             let spotify_track_id = SpotifyId::from_uri(&track_id).unwrap();
                             self.player.preload(spotify_track_id);
                         }
-                    },
-                    
+                    }
+
                     PlayerEvent::EndOfTrack { track_id, .. } => {
-                        tracing::info!("track with id {} ended!, playing next one if any", track_id);
+                        tracing::info!(
+                            "track with id {} ended!, playing next one if any",
+                            track_id
+                        );
                         if let Ok(Some(next_track)) = self.interface.get_next_track().await {
                             self.play_track(next_track).await;
                         }
-                    },
-                    _ => {tracing::info!("not yet implemented!")}
-                }     
-            }; 
+                    }
+                    _ => {
+                        tracing::info!("not yet implemented!")
+                    }
+                }
+            };
         }
     }
 }

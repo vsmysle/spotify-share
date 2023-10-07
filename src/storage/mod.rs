@@ -12,5 +12,4 @@ pub trait AsyncStorage {
     async fn current(&self) -> anyhow::Result<Option<Track>>;
 }
 
-
 pub mod local;

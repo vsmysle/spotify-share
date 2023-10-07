@@ -1,4 +1,4 @@
-use tracing_subscriber::{EnvFilter, fmt, prelude::*};
+use tracing_subscriber::{fmt, prelude::*, EnvFilter};
 
 pub fn init() {
     tracing_subscriber::registry()

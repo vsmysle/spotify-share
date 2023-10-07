@@ -2,7 +2,7 @@
 pub struct Track {
     pub album: String,
     pub artists: Vec<String>,
-    #[serde(with = "humantime_serde")] 
+    #[serde(with = "humantime_serde")]
     pub duration: std::time::Duration,
     pub explicit: bool,
     pub href: Option<String>,
@@ -14,8 +14,13 @@ pub struct Track {
 impl From<&rspotify::model::FullTrack> for Track {
     fn from(track: &rspotify::model::FullTrack) -> Self {
         let album = track.album.name.clone();
-        let artists = track.artists.iter().map(|artist| artist.name.clone()).collect::<Vec<String>>();
-        let duration = std::time::Duration::from_secs(track.duration.num_seconds().try_into().unwrap());
+        let artists = track
+            .artists
+            .iter()
+            .map(|artist| artist.name.clone())
+            .collect::<Vec<String>>();
+        let duration =
+            std::time::Duration::from_secs(track.duration.num_seconds().try_into().unwrap());
         let explicit = track.explicit;
 
         Self {
@@ -26,7 +31,7 @@ impl From<&rspotify::model::FullTrack> for Track {
             href: track.href.clone(),
             id: track.id.clone(),
             name: track.name.clone(),
-            popularity: track.popularity
+            popularity: track.popularity,
         }
     }
 }

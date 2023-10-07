@@ -12,7 +12,7 @@ pub struct Cli {
 pub enum Action {
     GetToken {
         #[arg(long, required(true))]
-        cache_directory: std::path::PathBuf
+        cache_directory: std::path::PathBuf,
     },
     RunServer {
         #[arg(long, env, default_value_t = std::net::Ipv4Addr::new(0, 0, 0, 0))]
@@ -20,6 +20,6 @@ pub enum Action {
         #[arg(long)]
         port: u16,
         #[arg(long, required(true))]
-        cache_directory: std::path::PathBuf
-    }
+        cache_directory: std::path::PathBuf,
+    },
 }

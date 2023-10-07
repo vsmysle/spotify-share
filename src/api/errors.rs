@@ -1,10 +1,10 @@
 use axum::http::StatusCode;
-use axum::response::Json;
 use axum::response::IntoResponse;
+use axum::response::Json;
 
 pub enum AppError {
     InternalServerError(anyhow::Error),
-    NotFound(String)
+    NotFound(String),
 }
 
 fn handle_error(err: anyhow::Error) -> AppError {
@@ -23,12 +23,11 @@ where
 impl IntoResponse for AppError {
     fn into_response(self) -> axum::response::Response {
         let (status, error_message) = match self {
-            AppError::InternalServerError(inner) => {
-                (StatusCode::INTERNAL_SERVER_ERROR, format!("Something went wrong! Error: {}", inner))
-            }
-            AppError::NotFound(msg) => {
-                (StatusCode::NOT_FOUND, msg)
-            }
+            AppError::InternalServerError(inner) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Something went wrong! Error: {}", inner),
+            ),
+            AppError::NotFound(msg) => (StatusCode::NOT_FOUND, msg),
         };
 
         let body = Json(serde_json::json!({

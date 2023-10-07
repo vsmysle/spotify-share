@@ -3,5 +3,5 @@ pub enum PlayerAction {
     Play,
     Stop,
     Next,
-    Prev
+    Prev,
 }
