@@ -18,19 +18,9 @@ pub mod tracks {
     ) -> Result<Json<Track>, AppError> {
         let track_id = track_request.track_id.clone();        
         tracing::info!("received a request to add a new track to a playlist - {}", track_id); 
-        match state.api_client.get_by_id(&track_id).await {
-            Ok(track) => {
-                tracing::info!("{:?}", track);
-                if let Err(err) = state.interface.add_track(track.clone()).await {
-                    Err(AppError::InternalServerError(err))
-                } else {
-                    Ok(Json(track))
-                }
-            },
-            Err(err) => {
-                Err(AppError::InternalServerError(err))
-            } 
-        }
+        let track = state.api_client.get_by_id(&track_id).await?;
+        state.interface.add_track(track.clone()).await?;
+        Ok(Json(track))
     }
     
     pub async fn list(
