@@ -69,12 +69,14 @@ impl SpotifyPlayer<LocalStorage> {
         }
     }
 
-    async fn play_track(&self, track: Track) {
+    async fn play_track(&self, track: Track) -> anyhow::Result<()> {
         let track_id = track.id;
+
         if let Some(track_id) = track_id {
-            let spotify_track_id = SpotifyId::from_uri(&track_id.to_string()).unwrap();
+            let spotify_track_id = SpotifyId::from_uri(&track_id.to_string())?;
             self.player.load(spotify_track_id, true, 0);
         }
+        Ok(())
     }
 
     pub async fn handle_api_actions(&self) -> anyhow::Result<()> {
@@ -85,7 +87,7 @@ impl SpotifyPlayer<LocalStorage> {
                     tracing::info!("Received play signal");
                     let track = self.interface.get_current_track().await?;
                     if let Some(track) = track {
-                        self.play_track(track).await;
+                        self.play_track(track).await?;
                     }
                 }
                 action::PlayerAction::Stop => {
@@ -96,7 +98,7 @@ impl SpotifyPlayer<LocalStorage> {
                     tracing::debug!("Received next signal");
                     let next_track = self.interface.get_next_track().await;
                     if let Ok(Some(next_track)) = next_track {
-                        self.play_track(next_track).await;
+                        self.play_track(next_track).await?;
                     } else {
                         tracing::warn!("No next track or error: {:?}", next_track);
                     }
@@ -105,7 +107,7 @@ impl SpotifyPlayer<LocalStorage> {
                     tracing::debug!("Received prev signal");
                     let prev_track = self.interface.get_prev_track().await;
                     if let Ok(Some(prev_track)) = prev_track {
-                        self.play_track(prev_track).await;
+                        self.play_track(prev_track).await?;
                     } else {
                         tracing::warn!("No prev track or error: {:?}", prev_track);
                     }
@@ -138,7 +140,7 @@ impl SpotifyPlayer<LocalStorage> {
                         if let Ok(Some(track_id)) =
                             self.interface.get_next_track_id_for_preload().await
                         {
-                            let spotify_track_id = SpotifyId::from_uri(&track_id).unwrap();
+                            let spotify_track_id = SpotifyId::from_uri(&track_id)?;
                             self.player.preload(spotify_track_id);
                         }
                     }
@@ -149,7 +151,7 @@ impl SpotifyPlayer<LocalStorage> {
                             track_id
                         );
                         if let Ok(Some(next_track)) = self.interface.get_next_track().await {
-                            self.play_track(next_track).await;
+                            self.play_track(next_track).await?;
                         }
                     }
                     _ => {

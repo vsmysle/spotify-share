@@ -19,8 +19,9 @@ impl From<&rspotify::model::FullTrack> for Track {
             .iter()
             .map(|artist| artist.name.clone())
             .collect::<Vec<String>>();
-        let duration =
-            std::time::Duration::from_secs(track.duration.num_seconds().try_into().unwrap());
+
+        // This should never fail
+        let duration = track.duration.to_std().unwrap_or_default();
         let explicit = track.explicit;
 
         Self {
