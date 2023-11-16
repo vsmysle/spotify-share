@@ -1,0 +1,42 @@
+[package]
+name = "spotify-share"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1"
+tokio = { version = "1", features = ["sync", "rt-multi-thread"] }
+
+# Queue
+crossbeam = { version = "0.8.2", features = ["crossbeam-queue"] }
+
+# HT
+axum = {version = "0.6.20", features = ["macros"]}
+axum-test = "12.4.0"
+tower-http = { version = "0.3.4", features = ["trace"] }
+
+# Cli / Config / Utils 
+clap = { version = "4.4.1", features = ["derive", "env"] }
+config = "0.13.3"
+dotenvy = "0.15.7"
+serde = {version = "1.0", features = ["derive"] }
+serde_json = "1"
+toml = "0.7.6"
+
+chrono = { version = "0.4.19", features = ["serde"] }
+humantime-serde = "1.1.1"
+
+async-trait = "0.1.73"
+
+# Tracing / Logging
+tracing = "0.1.37"
+tracing-subscriber = { version = "0.3.17", features = ["env-filter", "json", "registry"]}
+tracing-appender = "0.2"
+
+flume = "0.11.0"
+
+# Spotify
+rspotify = { version = "0.12.0", default-features = false, features = ["client-reqwest", "reqwest-native-tls"]}
+librespot = { git = "https://github.com/librespot-org/librespot", rev = "054074c920d5c6acf0210faa3cd849dc4e065828"}
